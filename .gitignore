@@ -1,0 +1,5 @@
+node_modules/
+db/vaultsync.db
+db/vaultsync.db-wal
+db/vaultsync.db-shm
+.env

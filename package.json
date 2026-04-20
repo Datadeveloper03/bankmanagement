@@ -1,0 +1,15 @@
+{
+  "name": "vaultsync-bank-management",
+  "version": "1.0.0",
+  "description": "VaultSync — Bank Management System with Node.js + MySQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "mysql2": "^3.11.0"
+  }
+}
