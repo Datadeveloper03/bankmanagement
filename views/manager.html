@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VaultSync Manager Dashboard — View all customers, transactions, and bank statistics.">
+  <title>Manager Dashboard — VaultSync</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/motion.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" role="navigation" aria-label="Manager navigation">
+      <div class="sidebar__logo">
+        <div class="sidebar__logo-icon">V</div>
+        <span class="sidebar__logo-text">VaultSync</span>
+      </div>
+
+      <nav class="sidebar__nav">
+        <button class="nav-item nav-item--active" data-view="dashboard" id="nav-dashboard">
+          <span class="nav-item__icon">📊</span><span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="customers" id="nav-customers">
+          <span class="nav-item__icon">👥</span><span>Customers</span>
+        </button>
+        <button class="nav-item" data-view="add-customer" id="nav-add-customer">
+          <span class="nav-item__icon">➕</span><span>Add Customer</span>
+        </button>
+        <button class="nav-item" data-view="all-transactions" id="nav-all-transactions">
+          <span class="nav-item__icon">📋</span><span>All Transactions</span>
+        </button>
+        <button class="nav-item" data-view="settings" id="nav-settings">
+          <span class="nav-item__icon">⚙️</span><span>Settings</span>
+        </button>
+      </nav>
+
+      <div style="border-top:1px solid var(--border-subtle);padding-top:var(--space-md);margin-top:auto;">
+        <div style="display:flex;align-items:center;gap:var(--space-md);padding:var(--space-sm);">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#ef4444);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;font-weight:700;">M</div>
+          <div style="flex:1;">
+            <div style="font-size:0.8rem;font-weight:600;" id="sidebar-name">Manager</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">Bank Manager</div>
+          </div>
+        </div>
+        <button class="nav-item" id="btn-logout" style="margin-top:var(--space-sm);color:var(--status-error);">
+          <span class="nav-item__icon">🚪</span><span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" role="main">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section class="view-panel view-panel--active" id="view-dashboard" aria-label="Manager Dashboard">
+        <header class="page-header">
+          <h1 class="page-header__title">Bank Overview</h1>
+          <p class="page-header__subtitle" id="dashboard-subtitle">Loading bank statistics...</p>
+        </header>
+
+        <div class="stats-grid" id="dashboard-stats"></div>
+
+        <div class="card" style="margin-top: var(--space-lg);">
+          <div class="card__header">
+            <div>
+              <h2 class="card__title">Recent Transactions (All Users)</h2>
+              <p class="card__subtitle">Latest activity across the entire bank</p>
+            </div>
+            <button class="btn btn--ghost btn--sm btn-trust" data-view="all-transactions">View All →</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" aria-label="Recent transactions">
+              <thead>
+                <tr><th>Date</th><th>Customer</th><th>Description</th><th>Type</th><th>Amount</th></tr>
+              </thead>
+              <tbody id="dashboard-recent-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== CUSTOMERS ===== -->
+      <section class="view-panel" id="view-customers" aria-label="Manage Customers">
+        <header class="page-header">
+          <h1 class="page-header__title">All Customers</h1>
+          <p class="page-header__subtitle">Manage customer accounts and balances</p>
+        </header>
+
+        <div class="card">
+          <div class="card__header">
+            <h2 class="card__title" id="customers-count">Customers</h2>
+            <button class="btn btn--primary btn--sm btn-trust" data-view="add-customer">+ Add Customer</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" aria-label="Customer accounts">
+              <thead>
+                <tr><th>Name</th><th>Username</th><th>Email</th><th>Type</th><th>Balance</th><th>Last Login</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="customers-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADD CUSTOMER ===== -->
+      <section class="view-panel" id="view-add-customer" aria-label="Add new customer">
+        <header class="page-header">
+          <h1 class="page-header__title">Add Customer</h1>
+          <p class="page-header__subtitle">Create a new customer account</p>
+        </header>
+
+        <div class="card" style="max-width:560px;">
+          <form id="add-customer-form" novalidate>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+              <div class="form-group">
+                <label class="form-label" for="new-name">Full Name *</label>
+                <input type="text" class="form-input input-trust" id="new-name" name="name" placeholder="John Doe" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="new-username">Username *</label>
+                <input type="text" class="form-input input-trust" id="new-username" name="username" placeholder="johndoe" required>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+              <div class="form-group">
+                <label class="form-label" for="new-email">Email</label>
+                <input type="email" class="form-input input-trust" id="new-email" name="email" placeholder="john@email.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="new-password">Password *</label>
+                <input type="password" class="form-input input-trust" id="new-password" name="password" placeholder="Min 4 characters" required>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+              <div class="form-group">
+                <label class="form-label" for="new-balance">Initial Balance ($)</label>
+                <input type="number" class="form-input input-trust" id="new-balance" name="balance" placeholder="0.00" min="0" step="0.01" value="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="new-account-type">Account Type</label>
+                <select class="form-select input-trust" id="new-account-type" name="accountType">
+                  <option value="Savings">Savings</option>
+                  <option value="Checking">Checking</option>
+                  <option value="Business">Business</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--full btn-trust" id="add-customer-btn" style="margin-top:var(--space-sm);">
+              Create Customer Account
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===== ALL TRANSACTIONS ===== -->
+      <section class="view-panel" id="view-all-transactions" aria-label="All transactions">
+        <header class="page-header">
+          <h1 class="page-header__title">All Transactions</h1>
+          <p class="page-header__subtitle">Complete transaction log across all customers</p>
+        </header>
+
+        <div class="card">
+          <div class="table-wrapper">
+            <table class="data-table" aria-label="All transactions">
+              <thead>
+                <tr><th>Date</th><th>Customer</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance After</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="all-transactions-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SETTINGS ===== -->
+      <section class="view-panel" id="view-settings" aria-label="Settings">
+        <header class="page-header">
+          <h1 class="page-header__title">Settings</h1>
+          <p class="page-header__subtitle">Manage your account settings</p>
+        </header>
+
+        <div class="card" style="max-width:480px;">
+          <h2 class="card__title" style="margin-bottom:var(--space-lg);">Change Password</h2>
+          <form id="change-password-form" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="current-password">Current Password</label>
+              <input type="password" class="form-input input-trust" id="current-password" name="currentPassword" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="new-password-change">New Password</label>
+              <input type="password" class="form-input input-trust" id="new-password-change" name="newPassword" placeholder="Min 4 characters" required>
+            </div>
+            <button type="submit" class="btn btn--primary btn--full btn-trust" id="change-password-btn">
+              Update Password
+            </button>
+          </form>
+        </div>
+
+        <div class="card" style="max-width:480px;margin-top:var(--space-lg);" id="login-info-card">
+          <h2 class="card__title" style="margin-bottom:var(--space-md);">Account Info</h2>
+          <div style="font-size:0.88rem;color:var(--text-secondary);line-height:2;">
+            <div><strong>Name:</strong> <span id="info-name">—</span></div>
+            <div><strong>Username:</strong> <span id="info-username">—</span></div>
+            <div><strong>Role:</strong> <span id="info-role">—</span></div>
+            <div><strong>Last Login:</strong> <span id="info-last-login">—</span></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Balance Adjustment Modal -->
+  <div id="adjust-balance-modal" style="display:none;">
+    <!-- Created dynamically by JS -->
+  </div>
+
+  <script type="module">
+    import {
+      ToastManager,
+      setButtonState,
+      animateCurrencyCount,
+      shakeElement,
+      SkeletonManager,
+      ConfirmModal,
+      animateRowDeletion,
+      formatNumber,
+    } from '/js/modules/trust-ui.js';
+
+    const toast = new ToastManager();
+    let currentUser = null;
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadCurrentUser();
+      initNavigation();
+      showView('dashboard');
+    });
+
+    async function loadCurrentUser() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) return window.location.href = '/login';
+        currentUser = await res.json();
+        document.getElementById('sidebar-name').textContent = currentUser.name;
+        document.getElementById('info-name').textContent = currentUser.name;
+        document.getElementById('info-username').textContent = currentUser.username;
+        document.getElementById('info-role').textContent = 'Bank Manager';
+        document.getElementById('info-last-login').textContent = currentUser.lastLogin
+          ? new Date(currentUser.lastLogin).toLocaleString()
+          : 'First login';
+      } catch {
+        window.location.href = '/login';
+      }
+    }
+
+    // ===== NAVIGATION =====
+    function initNavigation() {
+      document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          showView(btn.dataset.view);
+        });
+      });
+
+      document.getElementById('btn-logout').addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
+      });
+    }
+
+    function showView(viewName) {
+      document.querySelectorAll('[data-view]').forEach(item => {
+        item.classList.toggle('nav-item--active', item.dataset.view === viewName);
+      });
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('view-panel--active'));
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) {
+        target.classList.add('view-panel--active');
+        loadView(viewName);
+      }
+    }
+
+    function loadView(name) {
+      switch (name) {
+        case 'dashboard': loadDashboard(); break;
+        case 'customers': loadCustomers(); break;
+        case 'add-customer': initAddCustomerForm(); break;
+        case 'all-transactions': loadAllTransactions(); break;
+        case 'settings': initChangePassword(); break;
+      }
+    }
+
+    // ===== DASHBOARD =====
+    async function loadDashboard() {
+      const statsGrid = document.getElementById('dashboard-stats');
+      const tbody = document.getElementById('dashboard-recent-tbody');
+
+      statsGrid.innerHTML = Array(4).fill(SkeletonManager.statCardSkeleton()).join('');
+      tbody.innerHTML = Array(5).fill(SkeletonManager.tableRowSkeleton(5)).join('');
+
+      try {
+        const res = await fetch('/api/manager/stats');
+        const data = await res.json();
+
+        document.getElementById('dashboard-subtitle').textContent =
+          `Monitoring ${data.totalCustomers} customers with ${data.totalTransactions} transactions.`;
+
+        statsGrid.innerHTML = `
+          <div class="stat-card content-fade-in">
+            <div class="stat-card__label">Total Bank Balance</div>
+            <div class="stat-card__value currency-value" style="color:var(--status-success)">$${formatNumber(data.totalBalance)}</div>
+            <div class="stat-card__change stat-card__change--up">↑ Across all accounts</div>
+          </div>
+          <div class="stat-card content-fade-in" style="animation-delay:50ms">
+            <div class="stat-card__label">Total Customers</div>
+            <div class="stat-card__value">${data.totalCustomers}</div>
+            <div class="stat-card__change stat-card__change--up">↑ Active accounts</div>
+          </div>
+          <div class="stat-card content-fade-in" style="animation-delay:100ms">
+            <div class="stat-card__label">Total Deposits</div>
+            <div class="stat-card__value" style="color:var(--status-success)">$${formatNumber(data.totalDeposits)}</div>
+          </div>
+          <div class="stat-card content-fade-in" style="animation-delay:150ms">
+            <div class="stat-card__label">Total Withdrawals</div>
+            <div class="stat-card__value" style="color:var(--status-error)">$${formatNumber(data.totalWithdrawals)}</div>
+          </div>
+        `;
+
+        tbody.innerHTML = data.recentTransactions.length
+          ? data.recentTransactions.map((t, i) => `
+            <tr class="content-fade-in" style="animation-delay:${i * 40}ms">
+              <td>${new Date(t.created_at).toLocaleDateString()}</td>
+              <td style="font-weight:500">${t.user_name}</td>
+              <td>${t.description}</td>
+              <td><span class="badge badge--${t.type.replace('_in','').replace('_out','')}">${t.type.replace('_', ' ')}</span></td>
+              <td style="font-weight:600;font-variant-numeric:tabular-nums;color:${
+                t.type === 'deposit' || t.type === 'transfer_in' ? 'var(--status-success)' : 'var(--status-error)'
+              }">${t.type === 'deposit' || t.type === 'transfer_in' ? '+' : '-'}$${formatNumber(t.amount)}</td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">No transactions yet</td></tr>';
+
+      } catch (err) {
+        toast.error('Error', 'Failed to load dashboard data');
+      }
+    }
+
+    // ===== CUSTOMERS =====
+    async function loadCustomers() {
+      const tbody = document.getElementById('customers-tbody');
+      tbody.innerHTML = Array(4).fill(SkeletonManager.tableRowSkeleton(7)).join('');
+
+      try {
+        const res = await fetch('/api/manager/customers');
+        const { customers } = await res.json();
+
+        document.getElementById('customers-count').textContent = `${customers.length} Customers`;
+
+        tbody.innerHTML = customers.map((c, i) => `
+          <tr class="content-fade-in" style="animation-delay:${i * 40}ms" data-customer-id="${c.id}">
+            <td style="font-weight:600">${c.name}</td>
+            <td style="color:var(--text-secondary)">${c.username}</td>
+            <td style="color:var(--text-secondary)">${c.email || '—'}</td>
+            <td><span class="badge badge--${c.account_type === 'Savings' ? 'deposit' : c.account_type === 'Checking' ? 'transfer' : 'withdraw'}">${c.account_type}</span></td>
+            <td style="font-weight:600;font-variant-numeric:tabular-nums;" class="balance-cell" data-balance="${c.balance}">$${formatNumber(c.balance)}</td>
+            <td style="color:var(--text-muted);font-size:0.78rem;">${c.last_login ? new Date(c.last_login).toLocaleDateString() : 'Never'}</td>
+            <td>
+              <div style="display:flex;gap:4px;">
+                <button class="btn btn--ghost btn--sm btn-trust" onclick="window._adjustBalance(${c.id}, '${c.name}', ${c.balance})" aria-label="Adjust balance for ${c.name}" title="Adjust Balance">💰</button>
+                <button class="btn btn--ghost btn--sm btn-trust" onclick="window._deleteCustomer(${c.id}, '${c.name}')" aria-label="Delete ${c.name}" title="Delete Customer">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        toast.error('Error', 'Failed to load customers');
+      }
+    }
+
+    // Adjust balance modal
+    window._adjustBalance = async (id, name, currentBalance) => {
+      // Create a simple inline modal using ConfirmModal pattern
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop';
+      const dialog = document.createElement('div');
+      dialog.className = 'modal-dialog';
+      dialog.innerHTML = `
+        <div class="modal-content">
+          <h2 class="modal-content__title">Adjust Balance</h2>
+          <p class="modal-content__body">Set new balance for <strong>${name}</strong>.<br>Current: <strong>$${formatNumber(currentBalance)}</strong></p>
+          <div class="form-group">
+            <label class="form-label" for="modal-new-balance">New Balance ($)</label>
+            <input type="number" class="form-input input-trust" id="modal-new-balance" value="${currentBalance}" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="modal-reason">Reason</label>
+            <input type="text" class="form-input input-trust" id="modal-reason" placeholder="e.g., Correction, Bonus">
+          </div>
+          <div class="modal-content__actions">
+            <button class="btn btn--secondary btn-trust" id="modal-cancel-adj">Cancel</button>
+            <button class="btn btn--primary btn-trust" id="modal-confirm-adj">Update Balance</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(backdrop);
+      document.body.appendChild(dialog);
+
+      const balanceInput = dialog.querySelector('#modal-new-balance');
+      balanceInput.focus();
+      balanceInput.select();
+
+      const close = () => {
+        backdrop.classList.add('modal-backdrop--exiting');
+        dialog.classList.add('modal-dialog--exiting');
+        setTimeout(() => { backdrop.remove(); dialog.remove(); }, 200);
+      };
+
+      backdrop.addEventListener('click', close);
+      dialog.querySelector('#modal-cancel-adj').addEventListener('click', close);
+
+      dialog.querySelector('#modal-confirm-adj').addEventListener('click', async () => {
+        const newBalance = parseFloat(balanceInput.value);
+        const reason = dialog.querySelector('#modal-reason').value;
+        if (isNaN(newBalance) || newBalance < 0) {
+          shakeElement(balanceInput);
+          return;
+        }
+
+        const confirmBtn = dialog.querySelector('#modal-confirm-adj');
+        setButtonState(confirmBtn, 'loading');
+
+        try {
+          const res = await fetch(`/api/manager/customers/${id}/balance`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newBalance, reason }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          toast.success('Balance Updated', `${name}'s balance changed from $${formatNumber(data.oldBalance)} to $${formatNumber(data.newBalance)}.`);
+
+          // Animate the balance cell
+          const row = document.querySelector(`tr[data-customer-id="${id}"]`);
+          if (row) {
+            const cell = row.querySelector('.balance-cell');
+            if (cell) {
+              animateCurrencyCount(cell, data.oldBalance, data.newBalance, 300);
+            }
+          }
+
+          close();
+        } catch (err) {
+          setButtonState(confirmBtn, 'error', { errorText: err.message });
+        }
+      });
+
+      document.addEventListener('keydown', function onEsc(e) {
+        if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
+      });
+    };
+
+    // Delete customer
+    window._deleteCustomer = async (id, name) => {
+      const confirmed = await ConfirmModal.show({
+        title: 'Delete Customer',
+        message: `Are you sure you want to delete <strong>${name}</strong>? This will permanently remove their account and all transaction history.`,
+        confirmText: 'Delete',
+        danger: true,
+      });
+
+      if (confirmed) {
+        try {
+          const res = await fetch(`/api/manager/customers/${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error((await res.json()).error);
+
+          const row = document.querySelector(`tr[data-customer-id="${id}"]`);
+          if (row) await animateRowDeletion(row);
+
+          toast.success('Deleted', `${name}'s account has been removed.`);
+        } catch (err) {
+          toast.error('Error', err.message);
+        }
+      }
+    };
+
+    // ===== ADD CUSTOMER =====
+    function initAddCustomerForm() {
+      const form = document.getElementById('add-customer-form');
+      const btn = document.getElementById('add-customer-btn');
+
+      // Clone to remove old listeners
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = newForm.querySelector('#add-customer-btn');
+        const data = Object.fromEntries(new FormData(newForm));
+        data.balance = parseFloat(data.balance) || 0;
+
+        if (!data.name || !data.username || !data.password) {
+          const emptyInput = newForm.querySelector('input:invalid') || newForm.querySelector('[name="name"]');
+          shakeElement(emptyInput);
+          toast.error('Missing Fields', 'Name, username, and password are required.');
+          return;
+        }
+
+        setButtonState(submitBtn, 'loading');
+
+        try {
+          const res = await fetch('/api/manager/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error);
+
+          setButtonState(submitBtn, 'success', { successText: 'Customer Created!' });
+          toast.success('Customer Added', `${data.name} has been registered with a balance of $${formatNumber(data.balance)}.`);
+          newForm.reset();
+          newForm.querySelector('[name="balance"]').value = '0';
+        } catch (err) {
+          setButtonState(submitBtn, 'error', { errorText: err.message });
+          toast.error('Error', err.message);
+        }
+      });
+    }
+
+    // ===== ALL TRANSACTIONS =====
+    async function loadAllTransactions() {
+      const tbody = document.getElementById('all-transactions-tbody');
+      tbody.innerHTML = Array(6).fill(SkeletonManager.tableRowSkeleton(7)).join('');
+
+      try {
+        const res = await fetch('/api/manager/transactions');
+        const { transactions } = await res.json();
+
+        tbody.innerHTML = transactions.length
+          ? transactions.map((t, i) => `
+            <tr class="content-fade-in" style="animation-delay:${i * 30}ms" data-tx-id="${t.id}">
+              <td style="font-size:0.82rem">${new Date(t.created_at).toLocaleString()}</td>
+              <td style="font-weight:500">${t.user_name}</td>
+              <td>${t.description}</td>
+              <td><span class="badge badge--${t.type.replace('_in','').replace('_out','')}">${t.type.replace('_', ' ')}</span></td>
+              <td style="font-weight:600;font-variant-numeric:tabular-nums;color:${
+                t.type === 'deposit' || t.type === 'transfer_in' ? 'var(--status-success)' : 'var(--status-error)'
+              }">${t.type === 'deposit' || t.type === 'transfer_in' ? '+' : '-'}$${formatNumber(t.amount)}</td>
+              <td style="font-variant-numeric:tabular-nums;">${t.balance_after != null ? '$' + formatNumber(t.balance_after) : '—'}</td>
+              <td>
+                <button class="btn btn--ghost btn--sm btn-trust" onclick="window._deleteTx(${t.id})" aria-label="Delete transaction">🗑️</button>
+              </td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">No transactions yet</td></tr>';
+
+      } catch (err) {
+        toast.error('Error', 'Failed to load transactions');
+      }
+    }
+
+    window._deleteTx = async (id) => {
+      const confirmed = await ConfirmModal.show({
+        title: 'Delete Transaction',
+        message: 'Are you sure you want to delete this transaction record?',
+        confirmText: 'Delete',
+        danger: true,
+      });
+      if (confirmed) {
+        try {
+          const res = await fetch(`/api/manager/transactions/${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error((await res.json()).error);
+          const row = document.querySelector(`tr[data-tx-id="${id}"]`);
+          if (row) await animateRowDeletion(row);
+          toast.success('Deleted', 'Transaction record removed.');
+        } catch (err) {
+          toast.error('Error', err.message);
+        }
+      }
+    };
+
+    // ===== CHANGE PASSWORD =====
+    function initChangePassword() {
+      const form = document.getElementById('change-password-form');
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = newForm.querySelector('#change-password-btn');
+        const currentPassword = newForm.querySelector('[name="currentPassword"]').value;
+        const newPassword = newForm.querySelector('[name="newPassword"]').value;
+
+        if (!currentPassword || !newPassword) {
+          toast.error('Error', 'Both fields are required.');
+          return;
+        }
+
+        setButtonState(btn, 'loading');
+
+        try {
+          const res = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword, newPassword }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          setButtonState(btn, 'success', { successText: 'Password Updated!' });
+          toast.success('Success', 'Your password has been changed.');
+          newForm.reset();
+        } catch (err) {
+          setButtonState(btn, 'error', { errorText: err.message });
+          shakeElement(newForm.querySelector('[name="currentPassword"]'));
+          toast.error('Error', err.message);
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

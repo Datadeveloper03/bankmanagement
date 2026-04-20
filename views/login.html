@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VaultSync — Secure login for Bank Management System">
+  <title>Login — VaultSync</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/motion.css">
+  <link rel="stylesheet" href="/styles/auth.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+</head>
+<body>
+
+  <div class="auth-page">
+    <!-- Left Branding Panel -->
+    <div class="auth-branding">
+      <div class="auth-branding__logo">
+        <div class="auth-branding__logo-icon">V</div>
+        <span class="auth-branding__logo-text">VaultSync</span>
+      </div>
+
+      <h1 class="auth-branding__tagline">Trusted banking,<br>at your fingertips.</h1>
+      <p class="auth-branding__description">
+        Manage accounts, process transactions, and monitor financial activity — all from one secure, modern dashboard.
+      </p>
+
+      <div class="auth-branding__features">
+        <div class="auth-branding__feature">
+          <div class="auth-branding__feature-icon">🔒</div>
+          <span>Session-based secure authentication</span>
+        </div>
+        <div class="auth-branding__feature">
+          <div class="auth-branding__feature-icon">⚡</div>
+          <span>Real-time balance updates & animations</span>
+        </div>
+        <div class="auth-branding__feature">
+          <div class="auth-branding__feature-icon">📊</div>
+          <span>Comprehensive transaction history</span>
+        </div>
+        <div class="auth-branding__feature">
+          <div class="auth-branding__feature-icon">👥</div>
+          <span>Role-based access control</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="auth-form-panel">
+      <div class="auth-card">
+        <h2 class="auth-card__title">Welcome back</h2>
+        <p class="auth-card__subtitle">Sign in to your VaultSync account</p>
+
+        <!-- Role Tabs -->
+        <div class="role-tabs" role="tablist" aria-label="Login role selection">
+          <button class="role-tab role-tab--active" role="tab" aria-selected="true" data-role="customer" id="tab-customer">
+            Customer
+          </button>
+          <button class="role-tab" role="tab" aria-selected="false" data-role="manager" id="tab-manager">
+            Manager
+          </button>
+        </div>
+
+        <!-- Error / Success Alert -->
+        <div class="auth-alert" id="auth-alert" role="alert"></div>
+
+        <!-- Login Form -->
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-username">Username</label>
+            <input
+              type="text"
+              class="form-input input-trust"
+              id="login-username"
+              name="username"
+              placeholder="Enter your username"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                class="form-input input-trust"
+                id="login-password"
+                name="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              >
+              <button type="button" class="password-toggle" id="password-toggle" aria-label="Toggle password visibility">
+                👁
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--full btn-trust" id="login-submit-btn" style="margin-top: var(--space-sm);">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Demo Credentials -->
+        <div class="demo-credentials" id="demo-credentials">
+          <div class="demo-credentials__title">Demo Credentials</div>
+          <div id="demo-credentials-list">
+            <div class="demo-credentials__row">
+              <span>Customer</span>
+              <span><code>john</code> / <code>john123</code></span>
+            </div>
+            <div class="demo-credentials__row">
+              <span>Customer</span>
+              <span><code>jane</code> / <code>jane123</code></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('login-form');
+      const usernameInput = document.getElementById('login-username');
+      const passwordInput = document.getElementById('login-password');
+      const submitBtn = document.getElementById('login-submit-btn');
+      const alert = document.getElementById('auth-alert');
+      const passwordToggle = document.getElementById('password-toggle');
+      const demoList = document.getElementById('demo-credentials-list');
+
+      // Demo credentials per role
+      const demoCreds = {
+        customer: [
+          { label: 'Customer', user: 'john', pass: 'john123' },
+          { label: 'Customer', user: 'jane', pass: 'jane123' },
+        ],
+        manager: [
+          { label: 'Manager', user: 'admin', pass: 'admin123' },
+        ],
+      };
+
+      let selectedRole = 'customer';
+
+      // — Role tab switching —
+      document.querySelectorAll('.role-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.role-tab').forEach(t => {
+            t.classList.remove('role-tab--active');
+            t.setAttribute('aria-selected', 'false');
+          });
+          tab.classList.add('role-tab--active');
+          tab.setAttribute('aria-selected', 'true');
+          selectedRole = tab.dataset.role;
+
+          // Update demo credentials
+          demoList.innerHTML = demoCreds[selectedRole].map(c =>
+            `<div class="demo-credentials__row">
+              <span>${c.label}</span>
+              <span><code>${c.user}</code> / <code>${c.pass}</code></span>
+            </div>`
+          ).join('');
+
+          // Auto-fill first demo credential
+          usernameInput.value = demoCreds[selectedRole][0].user;
+          passwordInput.value = demoCreds[selectedRole][0].pass;
+
+          hideAlert();
+        });
+      });
+
+      // — Password toggle —
+      passwordToggle.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        passwordToggle.textContent = isPassword ? '🙈' : '👁';
+      });
+
+      // — Form submit —
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!username || !password) {
+          showAlert('Please enter both username and password.', 'error');
+          return;
+        }
+
+        // Loading state
+        submitBtn.disabled = true;
+        submitBtn.setAttribute('aria-disabled', 'true');
+        const originalText = submitBtn.textContent;
+        submitBtn.innerHTML = '<span class="spinner"></span>';
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            showAlert(data.error || 'Login failed', 'error');
+
+            // Shake the form
+            const card = document.querySelector('.auth-card');
+            card.classList.remove('shake');
+            void card.offsetWidth;
+            card.classList.add('shake');
+
+            submitBtn.disabled = false;
+            submitBtn.removeAttribute('aria-disabled');
+            submitBtn.textContent = originalText;
+            return;
+          }
+
+          // Success — turn button green then redirect
+          submitBtn.style.background = 'var(--status-success)';
+          submitBtn.textContent = '✓ Success';
+
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 500);
+
+        } catch (err) {
+          showAlert('Network error. Please try again.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.removeAttribute('aria-disabled');
+          submitBtn.textContent = originalText;
+        }
+      });
+
+      function showAlert(message, type) {
+        alert.textContent = message;
+        alert.className = `auth-alert auth-alert--${type}`;
+      }
+
+      function hideAlert() {
+        alert.className = 'auth-alert';
+        alert.textContent = '';
+      }
+    });
+  </script>
+
+</body>
+</html>

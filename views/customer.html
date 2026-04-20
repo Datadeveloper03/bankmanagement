@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VaultSync Customer Dashboard — Manage your deposits, withdrawals, and transfers.">
+  <title>My Account — VaultSync</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/motion.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" role="navigation" aria-label="Customer navigation">
+      <div class="sidebar__logo">
+        <div class="sidebar__logo-icon">V</div>
+        <span class="sidebar__logo-text">VaultSync</span>
+      </div>
+
+      <nav class="sidebar__nav">
+        <button class="nav-item nav-item--active" data-view="dashboard" id="nav-dashboard">
+          <span class="nav-item__icon">📊</span><span>My Account</span>
+        </button>
+        <button class="nav-item" data-view="deposit" id="nav-deposit">
+          <span class="nav-item__icon">💰</span><span>Deposit</span>
+        </button>
+        <button class="nav-item" data-view="withdraw" id="nav-withdraw">
+          <span class="nav-item__icon">💸</span><span>Withdraw</span>
+        </button>
+        <button class="nav-item" data-view="transfer" id="nav-transfer">
+          <span class="nav-item__icon">🔄</span><span>Transfer</span>
+        </button>
+        <button class="nav-item" data-view="history" id="nav-history">
+          <span class="nav-item__icon">📋</span><span>History</span>
+        </button>
+        <button class="nav-item" data-view="settings" id="nav-settings">
+          <span class="nav-item__icon">⚙️</span><span>Settings</span>
+        </button>
+      </nav>
+
+      <div style="border-top:1px solid var(--border-subtle);padding-top:var(--space-md);margin-top:auto;">
+        <div style="display:flex;align-items:center;gap:var(--space-md);padding:var(--space-sm);">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;font-weight:700;" id="sidebar-avatar">U</div>
+          <div style="flex:1;">
+            <div style="font-size:0.8rem;font-weight:600;" id="sidebar-name">Customer</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);" id="sidebar-account-type">Account</div>
+          </div>
+        </div>
+        <button class="nav-item" id="btn-logout" style="margin-top:var(--space-sm);color:var(--status-error);">
+          <span class="nav-item__icon">🚪</span><span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" role="main">
+
+      <!-- ===== PERSONAL DASHBOARD ===== -->
+      <section class="view-panel view-panel--active" id="view-dashboard" aria-label="My Account">
+        <header class="page-header">
+          <h1 class="page-header__title" id="greeting">Welcome back</h1>
+          <p class="page-header__subtitle" id="last-login-info">Loading your account...</p>
+        </header>
+
+        <!-- Balance Hero Card -->
+        <div class="card card--glow" style="text-align:center;padding:var(--space-2xl);margin-bottom:var(--space-xl);">
+          <div class="stat-card__label">Available Balance</div>
+          <div class="balance-display" style="margin:var(--space-md) 0;">
+            <span class="balance-currency">$</span>
+            <span id="hero-balance" class="currency-value">0.00</span>
+          </div>
+          <div style="display:flex;gap:var(--space-md);justify-content:center;margin-top:var(--space-lg);">
+            <button class="btn btn--primary btn-trust" data-view="deposit">💰 Deposit</button>
+            <button class="btn btn--secondary btn-trust" data-view="withdraw">💸 Withdraw</button>
+            <button class="btn btn--secondary btn-trust" data-view="transfer">🔄 Transfer</button>
+          </div>
+        </div>
+
+        <!-- Personal Stats -->
+        <div class="stats-grid" id="personal-stats"></div>
+
+        <!-- Recent Transactions -->
+        <div class="card">
+          <div class="card__header">
+            <div>
+              <h2 class="card__title">Recent Transactions</h2>
+              <p class="card__subtitle">Your latest account activity</p>
+            </div>
+            <button class="btn btn--ghost btn--sm btn-trust" data-view="history">View All →</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" aria-label="Recent transactions">
+              <thead>
+                <tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance</th></tr>
+              </thead>
+              <tbody id="dashboard-recent-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== DEPOSIT ===== -->
+      <section class="view-panel" id="view-deposit" aria-label="Deposit funds">
+        <header class="page-header">
+          <h1 class="page-header__title">Deposit Funds</h1>
+          <p class="page-header__subtitle">Add money to your account securely.</p>
+        </header>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-xl);max-width:900px;">
+          <div class="card">
+            <form id="deposit-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="deposit-amount">Amount ($)</label>
+                <input type="number" class="form-input input-trust" id="deposit-amount" name="amount" placeholder="0.00" min="0.01" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="deposit-description">Description (Optional)</label>
+                <input type="text" class="form-input input-trust" id="deposit-description" name="description" placeholder="e.g., Salary credit">
+              </div>
+              <button type="submit" class="btn btn--primary btn--full btn-trust" id="deposit-submit-btn">
+                Deposit Funds
+              </button>
+            </form>
+          </div>
+
+          <div class="card card--glow" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:var(--space-md);">🏦</div>
+            <div class="stat-card__label">Your Balance</div>
+            <div class="balance-display">
+              <span class="balance-currency">$</span>
+              <span class="form-balance-value currency-value" id="deposit-balance-display">0.00</span>
+            </div>
+            <p style="color:var(--text-muted);font-size:0.78rem;margin-top:var(--space-md);">Updates in real-time after deposit</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== WITHDRAW ===== -->
+      <section class="view-panel" id="view-withdraw" aria-label="Withdraw funds">
+        <header class="page-header">
+          <h1 class="page-header__title">Withdraw Funds</h1>
+          <p class="page-header__subtitle">Withdraw money from your account.</p>
+        </header>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-xl);max-width:900px;">
+          <div class="card">
+            <form id="withdraw-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="withdraw-amount">Amount ($)</label>
+                <input type="number" class="form-input input-trust" id="withdraw-amount" name="amount" placeholder="0.00" min="0.01" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="withdraw-description">Description (Optional)</label>
+                <input type="text" class="form-input input-trust" id="withdraw-description" name="description" placeholder="e.g., ATM withdrawal">
+              </div>
+              <button type="submit" class="btn btn--primary btn--full btn-trust" id="withdraw-submit-btn">
+                Withdraw Funds
+              </button>
+            </form>
+          </div>
+
+          <div class="card card--glow" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:var(--space-md);">💳</div>
+            <div class="stat-card__label">Your Balance</div>
+            <div class="balance-display">
+              <span class="balance-currency">$</span>
+              <span class="form-balance-value currency-value" id="withdraw-balance-display">0.00</span>
+            </div>
+            <p style="color:var(--text-muted);font-size:0.78rem;margin-top:var(--space-md);">Updates in real-time after withdrawal</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TRANSFER ===== -->
+      <section class="view-panel" id="view-transfer" aria-label="Transfer funds">
+        <header class="page-header">
+          <h1 class="page-header__title">Transfer Funds</h1>
+          <p class="page-header__subtitle">Send money to another VaultSync customer.</p>
+        </header>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-xl);max-width:900px;">
+          <div class="card">
+            <form id="transfer-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="transfer-to">Recipient</label>
+                <select class="form-select input-trust" id="transfer-to" name="toUsername" required>
+                  <option value="">Select recipient...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="transfer-amount">Amount ($)</label>
+                <input type="number" class="form-input input-trust" id="transfer-amount" name="amount" placeholder="0.00" min="0.01" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="transfer-description">Note (Optional)</label>
+                <input type="text" class="form-input input-trust" id="transfer-description" name="description" placeholder="e.g., Rent payment">
+              </div>
+              <button type="submit" class="btn btn--primary btn--full btn-trust" id="transfer-submit-btn">
+                Send Transfer
+              </button>
+            </form>
+          </div>
+
+          <div class="card card--glow" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:var(--space-md);">🔄</div>
+            <div class="stat-card__label">Your Balance</div>
+            <div class="balance-display">
+              <span class="balance-currency">$</span>
+              <span class="form-balance-value currency-value" id="transfer-balance-display">0.00</span>
+            </div>
+            <p style="color:var(--text-muted);font-size:0.78rem;margin-top:var(--space-md);">Updates after transfer completes</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== HISTORY ===== -->
+      <section class="view-panel" id="view-history" aria-label="Transaction history">
+        <header class="page-header">
+          <h1 class="page-header__title">Transaction History</h1>
+          <p class="page-header__subtitle">Your complete account activity</p>
+        </header>
+
+        <div class="card">
+          <div class="table-wrapper">
+            <table class="data-table" aria-label="Full transaction history">
+              <thead>
+                <tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance After</th></tr>
+              </thead>
+              <tbody id="history-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SETTINGS ===== -->
+      <section class="view-panel" id="view-settings" aria-label="Account settings">
+        <header class="page-header">
+          <h1 class="page-header__title">Account Settings</h1>
+          <p class="page-header__subtitle">Manage your account preferences</p>
+        </header>
+
+        <div class="card" style="max-width:480px;">
+          <h2 class="card__title" style="margin-bottom:var(--space-lg);">Change Password</h2>
+          <form id="change-password-form" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="current-password">Current Password</label>
+              <input type="password" class="form-input input-trust" id="current-password" name="currentPassword" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="new-password-change">New Password</label>
+              <input type="password" class="form-input input-trust" id="new-password-change" name="newPassword" placeholder="Min 4 characters" required>
+            </div>
+            <button type="submit" class="btn btn--primary btn--full btn-trust" id="change-password-btn">
+              Update Password
+            </button>
+          </form>
+        </div>
+
+        <div class="card" style="max-width:480px;margin-top:var(--space-lg);">
+          <h2 class="card__title" style="margin-bottom:var(--space-md);">Account Info</h2>
+          <div style="font-size:0.88rem;color:var(--text-secondary);line-height:2;">
+            <div><strong>Name:</strong> <span id="info-name">—</span></div>
+            <div><strong>Username:</strong> <span id="info-username">—</span></div>
+            <div><strong>Email:</strong> <span id="info-email">—</span></div>
+            <div><strong>Account Type:</strong> <span id="info-account-type">—</span></div>
+            <div><strong>Member Since:</strong> <span id="info-member-since">—</span></div>
+            <div><strong>Last Login:</strong> <span id="info-last-login">—</span></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      ToastManager,
+      setButtonState,
+      animateCurrencyCount,
+      shakeElement,
+      SkeletonManager,
+      formatNumber,
+    } from '/js/modules/trust-ui.js';
+
+    const toast = new ToastManager();
+    let currentUser = null;
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadCurrentUser();
+      initNavigation();
+      showView('dashboard');
+    });
+
+    async function loadCurrentUser() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) return window.location.href = '/login';
+        currentUser = await res.json();
+
+        // Update sidebar
+        document.getElementById('sidebar-name').textContent = currentUser.name;
+        document.getElementById('sidebar-account-type').textContent = currentUser.accountType + ' Account';
+        document.getElementById('sidebar-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+        // Update settings info
+        document.getElementById('info-name').textContent = currentUser.name;
+        document.getElementById('info-username').textContent = currentUser.username;
+        document.getElementById('info-email').textContent = currentUser.email || '—';
+        document.getElementById('info-account-type').textContent = currentUser.accountType;
+        document.getElementById('info-member-since').textContent = currentUser.createdAt
+          ? new Date(currentUser.createdAt).toLocaleDateString() : '—';
+        document.getElementById('info-last-login').textContent = currentUser.lastLogin
+          ? new Date(currentUser.lastLogin).toLocaleString() : 'First login';
+      } catch {
+        window.location.href = '/login';
+      }
+    }
+
+    async function refreshBalance() {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        currentUser.balance = data.balance;
+      }
+    }
+
+    function updateAllBalanceDisplays(oldBalance, newBalance) {
+      // Hero balance
+      const heroBal = document.getElementById('hero-balance');
+      if (heroBal) animateCurrencyCount(heroBal, oldBalance, newBalance, 300);
+
+      // Form balance displays
+      ['deposit', 'withdraw', 'transfer'].forEach(v => {
+        const el = document.getElementById(`${v}-balance-display`);
+        if (el) el.textContent = formatNumber(newBalance);
+      });
+    }
+
+    // ===== NAVIGATION =====
+    function initNavigation() {
+      document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          showView(btn.dataset.view);
+        });
+      });
+
+      document.getElementById('btn-logout').addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
+      });
+    }
+
+    function showView(viewName) {
+      document.querySelectorAll('.sidebar__nav [data-view]').forEach(item => {
+        item.classList.toggle('nav-item--active', item.dataset.view === viewName);
+      });
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('view-panel--active'));
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) {
+        target.classList.add('view-panel--active');
+        loadView(viewName);
+      }
+    }
+
+    function loadView(name) {
+      switch (name) {
+        case 'dashboard': loadPersonalDashboard(); break;
+        case 'deposit': initDepositForm(); break;
+        case 'withdraw': initWithdrawForm(); break;
+        case 'transfer': initTransferForm(); break;
+        case 'history': loadHistory(); break;
+        case 'settings': initChangePassword(); break;
+      }
+    }
+
+    // ===== PERSONAL DASHBOARD =====
+    async function loadPersonalDashboard() {
+      await refreshBalance();
+
+      document.getElementById('greeting').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}`;
+      document.getElementById('last-login-info').textContent = currentUser.lastLogin
+        ? `Last login: ${new Date(currentUser.lastLogin).toLocaleString()}`
+        : 'Welcome to VaultSync!';
+
+      // Hero balance (animate from 0)
+      const heroBal = document.getElementById('hero-balance');
+      animateCurrencyCount(heroBal, 0, currentUser.balance, 400);
+
+      // Load transactions for stats
+      const statsGrid = document.getElementById('personal-stats');
+      statsGrid.innerHTML = Array(3).fill(SkeletonManager.statCardSkeleton()).join('');
+
+      const tbody = document.getElementById('dashboard-recent-tbody');
+      tbody.innerHTML = Array(3).fill(SkeletonManager.tableRowSkeleton(5)).join('');
+
+      try {
+        const res = await fetch('/api/customer/transactions');
+        const { transactions } = await res.json();
+
+        const totalDeposits = transactions.filter(t => t.type === 'deposit' || t.type === 'transfer_in').reduce((s, t) => s + t.amount, 0);
+        const totalWithdrawals = transactions.filter(t => t.type === 'withdraw' || t.type === 'transfer_out').reduce((s, t) => s + t.amount, 0);
+
+        statsGrid.innerHTML = `
+          <div class="stat-card content-fade-in">
+            <div class="stat-card__label">Total Transactions</div>
+            <div class="stat-card__value">${transactions.length}</div>
+          </div>
+          <div class="stat-card content-fade-in" style="animation-delay:50ms">
+            <div class="stat-card__label">Total Deposits</div>
+            <div class="stat-card__value" style="color:var(--status-success)">$${formatNumber(totalDeposits)}</div>
+          </div>
+          <div class="stat-card content-fade-in" style="animation-delay:100ms">
+            <div class="stat-card__label">Total Withdrawals</div>
+            <div class="stat-card__value" style="color:var(--status-error)">$${formatNumber(totalWithdrawals)}</div>
+          </div>
+        `;
+
+        // Recent 5 transactions
+        tbody.innerHTML = transactions.length
+          ? transactions.slice(0, 5).map((t, i) => `
+            <tr class="content-fade-in" style="animation-delay:${i * 40}ms">
+              <td>${new Date(t.created_at).toLocaleDateString()}</td>
+              <td>${t.description}</td>
+              <td><span class="badge badge--${t.type.replace('_in','').replace('_out','')}">${t.type.replace('_', ' ')}</span></td>
+              <td style="font-weight:600;font-variant-numeric:tabular-nums;color:${
+                t.type === 'deposit' || t.type === 'transfer_in' ? 'var(--status-success)' : 'var(--status-error)'
+              }">${t.type === 'deposit' || t.type === 'transfer_in' ? '+' : '-'}$${formatNumber(t.amount)}</td>
+              <td style="font-variant-numeric:tabular-nums;">$${formatNumber(t.balance_after)}</td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">No transactions yet. Make your first deposit!</td></tr>';
+
+      } catch (err) {
+        toast.error('Error', 'Failed to load dashboard');
+      }
+    }
+
+    // ===== DEPOSIT =====
+    function initDepositForm() {
+      document.getElementById('deposit-balance-display').textContent = formatNumber(currentUser.balance);
+      const form = document.getElementById('deposit-form');
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = newForm.querySelector('#deposit-submit-btn');
+        const amountInput = newForm.querySelector('[name="amount"]');
+        const amount = parseFloat(amountInput.value);
+        const description = newForm.querySelector('[name="description"]').value;
+
+        if (!amount || amount <= 0) {
+          shakeElement(amountInput);
+          toast.error('Invalid Amount', 'Please enter a valid positive amount.');
+          return;
+        }
+
+        setButtonState(btn, 'loading');
+
+        try {
+          const res = await fetch('/api/customer/deposit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount, description }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          setButtonState(btn, 'success', { successText: 'Deposited!' });
+
+          // Animate balance
+          const balEl = document.getElementById('deposit-balance-display');
+          animateCurrencyCount(balEl, data.oldBalance, data.newBalance, 300);
+          currentUser.balance = data.newBalance;
+
+          toast.success('Deposit Successful', `$${formatNumber(amount)} has been deposited to your account.`);
+          amountInput.value = '';
+          newForm.querySelector('[name="description"]').value = '';
+        } catch (err) {
+          setButtonState(btn, 'error', { errorText: err.message });
+          shakeElement(amountInput);
+          toast.error('Deposit Failed', err.message);
+        }
+      });
+    }
+
+    // ===== WITHDRAW =====
+    function initWithdrawForm() {
+      document.getElementById('withdraw-balance-display').textContent = formatNumber(currentUser.balance);
+      const form = document.getElementById('withdraw-form');
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = newForm.querySelector('#withdraw-submit-btn');
+        const amountInput = newForm.querySelector('[name="amount"]');
+        const amount = parseFloat(amountInput.value);
+        const description = newForm.querySelector('[name="description"]').value;
+
+        if (!amount || amount <= 0) {
+          shakeElement(amountInput);
+          toast.error('Invalid Amount', 'Please enter a valid positive amount.');
+          return;
+        }
+
+        setButtonState(btn, 'loading');
+
+        try {
+          const res = await fetch('/api/customer/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount, description }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          setButtonState(btn, 'success', { successText: 'Withdrawn!' });
+
+          const balEl = document.getElementById('withdraw-balance-display');
+          animateCurrencyCount(balEl, data.oldBalance, data.newBalance, 300);
+          currentUser.balance = data.newBalance;
+
+          toast.success('Withdrawal Successful', `$${formatNumber(amount)} has been withdrawn from your account.`);
+          amountInput.value = '';
+          newForm.querySelector('[name="description"]').value = '';
+        } catch (err) {
+          setButtonState(btn, 'error', { errorText: err.message });
+          shakeElement(amountInput);
+          toast.error('Withdrawal Failed', err.message);
+        }
+      });
+    }
+
+    // ===== TRANSFER =====
+    async function initTransferForm() {
+      document.getElementById('transfer-balance-display').textContent = formatNumber(currentUser.balance);
+
+      // Load recipients
+      try {
+        const res = await fetch('/api/customer/recipients');
+        const { recipients } = await res.json();
+        const select = document.getElementById('transfer-to');
+        select.innerHTML = '<option value="">Select recipient...</option>' +
+          recipients.map(r => `<option value="${r.username}">${r.name} (@${r.username})</option>`).join('');
+      } catch {}
+
+      const form = document.getElementById('transfer-form');
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+
+      // Re-load recipients into cloned form
+      try {
+        const res = await fetch('/api/customer/recipients');
+        const { recipients } = await res.json();
+        const select = newForm.querySelector('[name="toUsername"]');
+        select.innerHTML = '<option value="">Select recipient...</option>' +
+          recipients.map(r => `<option value="${r.username}">${r.name} (@${r.username})</option>`).join('');
+      } catch {}
+
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = newForm.querySelector('#transfer-submit-btn');
+        const toSelect = newForm.querySelector('[name="toUsername"]');
+        const amountInput = newForm.querySelector('[name="amount"]');
+        const toUsername = toSelect.value;
+        const amount = parseFloat(amountInput.value);
+        const description = newForm.querySelector('[name="description"]').value;
+
+        if (!toUsername) {
+          shakeElement(toSelect);
+          toast.error('No Recipient', 'Please select a recipient.');
+          return;
+        }
+
+        if (!amount || amount <= 0) {
+          shakeElement(amountInput);
+          toast.error('Invalid Amount', 'Please enter a valid positive amount.');
+          return;
+        }
+
+        setButtonState(btn, 'loading');
+
+        try {
+          const res = await fetch('/api/customer/transfer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ toUsername, amount, description }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          setButtonState(btn, 'success', { successText: 'Transferred!' });
+
+          const balEl = document.getElementById('transfer-balance-display');
+          animateCurrencyCount(balEl, data.oldBalance, data.newBalance, 300);
+          currentUser.balance = data.newBalance;
+
+          toast.success('Transfer Complete', `$${formatNumber(amount)} sent to ${data.recipientName}.`);
+          amountInput.value = '';
+          newForm.querySelector('[name="description"]').value = '';
+        } catch (err) {
+          setButtonState(btn, 'error', { errorText: err.message });
+          shakeElement(amountInput);
+          toast.error('Transfer Failed', err.message);
+        }
+      });
+    }
+
+    // ===== TRANSACTION HISTORY =====
+    async function loadHistory() {
+      const tbody = document.getElementById('history-tbody');
+      tbody.innerHTML = Array(5).fill(SkeletonManager.tableRowSkeleton(5)).join('');
+
+      try {
+        const res = await fetch('/api/customer/transactions');
+        const { transactions } = await res.json();
+
+        tbody.innerHTML = transactions.length
+          ? transactions.map((t, i) => `
+            <tr class="content-fade-in" style="animation-delay:${i * 30}ms">
+              <td style="font-size:0.82rem">${new Date(t.created_at).toLocaleString()}</td>
+              <td>${t.description}${t.related_user_name ? ` <span style="color:var(--text-muted);font-size:0.78rem;">(${t.related_user_name})</span>` : ''}</td>
+              <td><span class="badge badge--${t.type.replace('_in','').replace('_out','')}">${t.type.replace('_', ' ')}</span></td>
+              <td style="font-weight:600;font-variant-numeric:tabular-nums;color:${
+                t.type === 'deposit' || t.type === 'transfer_in' ? 'var(--status-success)' : 'var(--status-error)'
+              }">${t.type === 'deposit' || t.type === 'transfer_in' ? '+' : '-'}$${formatNumber(t.amount)}</td>
+              <td style="font-variant-numeric:tabular-nums;">$${formatNumber(t.balance_after)}</td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted);">No transactions yet</td></tr>';
+      } catch (err) {
+        toast.error('Error', 'Failed to load transaction history');
+      }
+    }
+
+    // ===== CHANGE PASSWORD =====
+    function initChangePassword() {
+      const form = document.getElementById('change-password-form');
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = newForm.querySelector('#change-password-btn');
+        const currentPassword = newForm.querySelector('[name="currentPassword"]').value;
+        const newPassword = newForm.querySelector('[name="newPassword"]').value;
+
+        if (!currentPassword || !newPassword) {
+          toast.error('Error', 'Both fields are required.');
+          return;
+        }
+
+        setButtonState(btn, 'loading');
+
+        try {
+          const res = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword, newPassword }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          setButtonState(btn, 'success', { successText: 'Password Updated!' });
+          toast.success('Success', 'Your password has been changed.');
+          newForm.reset();
+        } catch (err) {
+          setButtonState(btn, 'error', { errorText: err.message });
+          shakeElement(newForm.querySelector('[name="currentPassword"]'));
+          toast.error('Error', err.message);
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
